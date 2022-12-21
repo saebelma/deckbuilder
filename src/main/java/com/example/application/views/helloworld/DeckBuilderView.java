@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.boot.json.JacksonJsonParser;
 import org.springframework.web.client.RestClientException;
@@ -13,6 +14,7 @@ import org.vaadin.olli.FileDownloadWrapper;
 import com.example.application.data.Card;
 import com.example.application.data.Deck;
 import com.example.application.data.Slot;
+import com.example.application.data.service.DecklistService;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -33,8 +35,10 @@ public class DeckBuilderView extends VerticalLayout {
 	Deck deck = new Deck();
 	Grid<Slot> mainboardView = new Grid<>(Slot.class, false);
 	Grid<Slot> sideboardView = new Grid<>(Slot.class, false);
+	DecklistService decklistService;
 
-	public DeckBuilderView() {
+	public DeckBuilderView(DecklistService decklistService) {
+		this.decklistService = decklistService;
 
 		// Generate search bar and results view
 		addCardSearchView();
@@ -47,6 +51,10 @@ public class DeckBuilderView extends VerticalLayout {
 
 		// Add download button
 		addDownloadButton();
+
+		// Add load and save buttons
+		addLoadDecklistButton();
+		addSaveDecklistButton();
 
 	}
 
@@ -62,6 +70,30 @@ public class DeckBuilderView extends VerticalLayout {
 				new StreamResource("decklist.txt", () -> new ByteArrayInputStream(deck.getText().getBytes())));
 		buttonWrapper.wrapComponent(button);
 		add(buttonWrapper);
+	}
+
+	private void addLoadDecklistButton() {
+		Button button = new Button("Load Decklist");
+		button.addClickListener(click -> loadDecklist());
+		add(button);
+	}
+
+	private void loadDecklist() {
+		List<Card> mainboard = decklistService.loadMainboard();
+		deck.deleteAllSlots();
+		mainboard.stream().forEach(card -> deck.addSlotToMainboard(card));
+		updateMainboardView();
+	}
+
+	private void addSaveDecklistButton() {
+		Button button = new Button("Save Decklist");
+		button.addClickListener(click -> saveDecklist());
+		add(button);
+	}
+
+	private void saveDecklist() {
+		List<Card> mainboard = deck.getMainboard().stream().map(slot -> slot.getCard()).collect(Collectors.toList());
+		decklistService.saveMainboard(mainboard);
 	}
 
 	private HorizontalLayout getSearchResultsView() {

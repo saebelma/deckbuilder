@@ -33,6 +33,11 @@ public class Deck {
 		sideboard.remove(slot);
 	}
 
+	public void deleteAllSlots() {
+		mainboard.clear();
+		sideboard.clear();
+	}
+
 	public String getText() {
 		String text = "Mainboard\n";
 		text += getMainboard().stream().map(slot -> slot.getNumberOfCopies() + " " + slot.getCard().getCardName())
